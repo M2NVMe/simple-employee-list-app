@@ -12,7 +12,7 @@ class EmployeeFormScreen extends StatelessWidget {
         title: Obx(() => Text(employeeController.selectedEmployee.value == null
             ? 'Add Employee'
             : 'Edit Employee')),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -81,7 +81,7 @@ class EmployeeFormScreen extends StatelessWidget {
                       ? null
                       : () => employeeController.saveEmployee(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

@@ -24,8 +24,8 @@ class Homepage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Employee Management'),
-        backgroundColor: Colors.grey,
-        foregroundColor: Colors.black54,
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: Icon(Icons.add),

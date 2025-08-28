@@ -8,21 +8,47 @@ class EmployeeDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final employeeController = Get.find<EmployeeController>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Employee Details'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16),
-        child: Obx(() {
-          final employee = employeeController.selectedEmployee.value;
-          if (employee == null) {
-            return Center(child: Text('No employee selected'));
-          }
+    return Obx(() {
+      final employee = employeeController.selectedEmployee.value;
+      if (employee == null) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Employee Details'),
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+          ),
+          body: Center(child: Text('No employee selected')),
+        );
+      }
 
-          return Column(
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Employee Details'),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.white),
+              onPressed: () {
+                Get.defaultDialog(
+                  title: "Confirm Delete",
+                  middleText: "Are you sure you want to delete ${employee.fullName}?",
+                  textCancel: "Cancel",
+                  textConfirm: "Delete",
+                  confirmTextColor: Colors.white,
+                  onConfirm: () async {
+                    await employeeController.deleteEmployee(employee);
+                    Get.back(); // close dialog
+                    Get.back(); // go back to employee list
+                  },
+                );
+              },
+            )
+          ],
+        ),
+        body: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
             children: [
               Card(
                 child: Padding(
@@ -74,22 +100,20 @@ class EmployeeDetailScreen extends StatelessWidget {
                       DetailRow(label: 'Email', value: employee.email),
                       DetailRow(
                           label: 'Position',
-                          value: employee.position ?? 'Software Engineer'
-                      ),
+                          value: employee.position ?? 'Software Engineer'),
                       DetailRow(
                           label: 'Salary',
                           value: employee.salary != null
                               ? 'Rp ${employee.salary!.toStringAsFixed(0)}'
-                              : 'Rp 5,000,000'
-                      ),
+                              : 'Rp 5,000,000'),
                     ],
                   ),
                 ),
               ),
             ],
-          );
-        }),
-      ),
-    );
+          ),
+        ),
+      );
+    });
   }
 }

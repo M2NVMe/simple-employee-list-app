@@ -29,38 +29,6 @@ class EmployeeController extends GetxController {
     loadAllEmployees();
   }
 
-  Future<void> loadEmployees() async {
-    isLoading.value = true;
-    employees.clear();
-
-    int page = 1;
-    bool more = true;
-
-    while (more) {
-      final result = await _apiService.getEmployees(page);
-      if (result['success']) {
-        employees.addAll(result['employees']);
-        totalPages.value = result['totalPages'];
-        page++;
-        more = page <= totalPages.value;
-      } else {
-        more = false;
-        Get.snackbar(
-          'Error',
-          result['message'],
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
-    }
-
-    // Start with all employees visible
-    filteredEmployees.value = List<Employee>.from(employees);
-    isLoading.value = false;
-  }
-
-
   Future<void> loadAllEmployees() async {
     isLoading.value = true;
     employees.clear();
@@ -86,13 +54,10 @@ class EmployeeController extends GetxController {
         );
       }
     }
-
     // Start with all employees visible
     filteredEmployees.value = List<Employee>.from(employees);
     isLoading.value = false;
   }
-
-
 
   void filterEmployees() {
     if (searchQuery.value.isEmpty) {
@@ -100,11 +65,16 @@ class EmployeeController extends GetxController {
       filteredEmployees.value = List<Employee>.from(employees);
     } else {
       filteredEmployees.value = employees.where((employee) {
-        return employee.fullName.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-            employee.email.toLowerCase().contains(searchQuery.value.toLowerCase());
+        return employee.fullName
+                .toLowerCase()
+                .contains(searchQuery.value.toLowerCase()) ||
+            employee.email
+                .toLowerCase()
+                .contains(searchQuery.value.toLowerCase());
       }).toList();
     }
   }
+
   void onSearchChanged(String query) {
     searchQuery.value = query;
 
@@ -118,19 +88,17 @@ class EmployeeController extends GetxController {
     }
   }
 
-
-
   Future<void> goToNextPage() async {
     if (currentPage.value < totalPages.value) {
       currentPage.value++;
-      await loadEmployees();
+      await loadAllEmployees();
     }
   }
 
   Future<void> goToPreviousPage() async {
     if (currentPage.value > 1) {
       currentPage.value--;
-      await loadEmployees();
+      await loadAllEmployees();
     }
   }
 
@@ -171,18 +139,56 @@ class EmployeeController extends GetxController {
 
     final result = selectedEmployee.value == null
         ? await _apiService.createEmployee(employeeData)
-        : await _apiService.updateEmployee(selectedEmployee.value!.id, employeeData);
+        : await _apiService.updateEmployee(
+            selectedEmployee.value!.id, employeeData);
 
     isFormLoading.value = false;
 
     if (result['success']) {
+      final employee = result['employee'] as Employee;
+
+      if (selectedEmployee.value == null) {
+        employees.add(employee);
+      } else {
+        final index = employees.indexWhere((e) => e.id == employee.id);
+        if (index != -1) {
+          employees[index] = employee;
+        }
+      }
+
+      filterEmployees();
       Get.back();
-      loadEmployees();
       Get.snackbar(
         'Success',
         selectedEmployee.value == null
             ? 'Employee created successfully!'
             : 'Employee updated successfully!',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    }
+    else {
+      Get.snackbar(
+        'Error',
+        result['message'],
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> deleteEmployee(Employee employee) async {
+    final result = await _apiService.deleteEmployee(employee.id);
+
+    if (result['success']) {
+      employees.removeWhere((e) => e.id == employee.id);
+      filterEmployees();
+
+      Get.snackbar(
+        'Success',
+        'Employee deleted successfully!',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
@@ -197,6 +203,7 @@ class EmployeeController extends GetxController {
       );
     }
   }
+
 
   bool _validateForm() {
     if (firstNameController.text.isEmpty) {

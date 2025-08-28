@@ -91,7 +91,19 @@ class ApiService {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        return {'success': true, 'employee': data};
+
+        // 🔹 Build a complete Employee object ourselves
+        final employee = Employee(
+          id: int.tryParse(data['id'].toString()) ?? DateTime.now().millisecondsSinceEpoch,
+          email: employeeData['email'],
+          firstName: employeeData['first_name'],
+          lastName: employeeData['last_name'],
+          avatar: "https://ui-avatars.com/api/?name=${employeeData['first_name']}+${employeeData['last_name']}",
+          position: employeeData['position'],
+          salary: employeeData['salary'],
+        );
+
+        return {'success': true, 'employee': employee};
       } else {
         return {'success': false, 'message': 'Failed to create employee'};
       }
@@ -99,6 +111,7 @@ class ApiService {
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
+
 
   Future<Map<String, dynamic>> updateEmployee(int id, Map<String, dynamic> employeeData) async {
     try {
@@ -109,8 +122,18 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return {'success': true, 'employee': data};
+        // 🔹 Build full employee object with updated fields
+        final employee = Employee(
+          id: id,
+          email: employeeData['email'],
+          firstName: employeeData['first_name'],
+          lastName: employeeData['last_name'],
+          avatar: "https://ui-avatars.com/api/?name=${employeeData['first_name']}+${employeeData['last_name']}",
+          position: employeeData['position'],
+          salary: employeeData['salary'],
+        );
+
+        return {'success': true, 'employee': employee};
       } else {
         return {'success': false, 'message': 'Failed to update employee'};
       }
@@ -118,6 +141,26 @@ class ApiService {
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
+
+  //EXPERIMENTAL SECTION, SOMETIMES IT WORKS SOMETIMES DOESNT, I DONT KNOW WHY
+  Future<Map<String, dynamic>> deleteEmployee(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/users/$id'),
+        headers: _getHeaders(),
+      );
+
+      if (response.statusCode == 204) {
+        // ReqRes returns 204 No Content, no body
+        return {'success': true};
+      } else {
+        return {'success': false, 'message': 'Failed to delete employee'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+  //END OF EXPERIMENTAL SECTION
 
   Map<String, String> _getHeaders() {
     String? token = storage.read('token');
