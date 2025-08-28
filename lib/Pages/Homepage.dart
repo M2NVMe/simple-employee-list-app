@@ -1,4 +1,3 @@
-import 'package:amazingpeoplegroup_test/Controllers/AuthController.dart';
 import 'package:amazingpeoplegroup_test/Controllers/EmployeeController.dart';
 import 'package:amazingpeoplegroup_test/Controllers/Routing/Routes.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +6,7 @@ import 'package:get/get.dart';
 class Homepage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final authController = Get.find<AuthController>();
     final employeeController = Get.find<EmployeeController>();
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Employee Management'),
@@ -17,8 +14,11 @@ class Homepage extends StatelessWidget {
         foregroundColor: Colors.black54,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () => authController.logout(),
+            icon: Icon(Icons.add),
+            onPressed: () {
+              employeeController.prepareFormForAdd();
+              Get.toNamed(AppRoutes.employeeForm);
+            },
           ),
         ],
       ),
@@ -112,14 +112,6 @@ class Homepage extends StatelessWidget {
             )),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          employeeController.prepareFormForAdd();
-          Get.toNamed(AppRoutes.employeeForm);
-        },
-        backgroundColor: Colors.grey,
-        child: Icon(Icons.add, color: Colors.black54),
       ),
     );
   }

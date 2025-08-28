@@ -15,6 +15,7 @@ class AuthController extends GetxController {
 
   var isLoading = false.obs;
   var isLoggedIn = false.obs;
+  var userEmail = ''.obs;
 
   @override
   void onInit() {
@@ -66,7 +67,10 @@ class AuthController extends GetxController {
 
     if (result['success']) {
       isLoggedIn.value = true;
-      Get.offAllNamed(AppRoutes.dashboard);
+      userEmail.value = emailController.text.trim();
+      // Simpan email user ke storage
+      storage.write('userEmail', emailController.text.trim());
+      Get.offAllNamed(AppRoutes.utama);
       Get.snackbar(
         'Success',
         'Login successful!',
