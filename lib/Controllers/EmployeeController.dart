@@ -26,7 +26,7 @@ class EmployeeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadEmployees();
+    loadAllEmployees();
   }
 
   Future<void> loadEmployees() async {
@@ -35,7 +35,7 @@ class EmployeeController extends GetxController {
     final result = await _apiService.getEmployees(currentPage.value);
 
     if (result['success']) {
-      employees.value = result['employees'];
+      employees.value = result['employees']; // replace, not append
       totalPages.value = result['totalPages'];
       filterEmployees();
     } else {
@@ -47,13 +47,47 @@ class EmployeeController extends GetxController {
         colorText: Colors.white,
       );
     }
-
     isLoading.value = false;
   }
 
+
+  Future<void> loadAllEmployees() async {
+    isLoading.value = true;
+    employees.clear();
+
+    int page = 1;
+    bool more = true;
+
+    while (more) {
+      final result = await _apiService.getEmployees(page);
+      if (result['success']) {
+        employees.addAll(result['employees']);
+        totalPages.value = result['totalPages'];
+        page++;
+        more = page <= totalPages.value;
+      } else {
+        more = false;
+        Get.snackbar(
+          'Error',
+          result['message'],
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+
+    // Start with all employees visible
+    filteredEmployees.value = List<Employee>.from(employees);
+    isLoading.value = false;
+  }
+
+
+
   void filterEmployees() {
     if (searchQuery.value.isEmpty) {
-      filteredEmployees.value = employees;
+      // 👇 make a copy
+      filteredEmployees.value = List<Employee>.from(employees);
     } else {
       filteredEmployees.value = employees.where((employee) {
         return employee.fullName.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
@@ -61,11 +95,20 @@ class EmployeeController extends GetxController {
       }).toList();
     }
   }
-
   void onSearchChanged(String query) {
     searchQuery.value = query;
-    filterEmployees();
+
+    if (query.isEmpty) {
+      filteredEmployees.value = List<Employee>.from(employees);
+    } else {
+      filteredEmployees.value = employees.where((employee) {
+        return employee.fullName.toLowerCase().contains(query.toLowerCase()) ||
+            employee.email.toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    }
   }
+
+
 
   Future<void> goToNextPage() async {
     if (currentPage.value < totalPages.value) {

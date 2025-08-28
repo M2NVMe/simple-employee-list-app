@@ -4,9 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class Homepage extends StatelessWidget {
+  final ScrollController scrollController = ScrollController();
+
+  Homepage({super.key});
+
   @override
   Widget build(BuildContext context) {
     final employeeController = Get.find<EmployeeController>();
+
+    // attach listener to detect scroll to bottom
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent &&
+          !employeeController.isLoading.value &&
+          employeeController.currentPage.value < employeeController.totalPages.value) {
+        employeeController.goToNextPage();
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: Text('Employee Management'),
@@ -90,27 +104,27 @@ class Homepage extends StatelessWidget {
               );
             }),
           ),
-          Container(
-            padding: EdgeInsets.all(16),
-            child: Obx(() => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: employeeController.currentPage.value > 1
-                      ? () => employeeController.goToPreviousPage()
-                      : null,
-                  child: Text('Previous'),
-                ),
-                Text('Page ${employeeController.currentPage.value} of ${employeeController.totalPages.value}'),
-                ElevatedButton(
-                  onPressed: employeeController.currentPage.value < employeeController.totalPages.value
-                      ? () => employeeController.goToNextPage()
-                      : null,
-                  child: Text('Next'),
-                ),
-              ],
-            )),
-          ),
+          // Container(
+          //   padding: EdgeInsets.all(16),
+          //   child: Obx(() => Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       ElevatedButton(
+          //         onPressed: employeeController.currentPage.value > 1
+          //             ? () => employeeController.goToPreviousPage()
+          //             : null,
+          //         child: Text('Previous'),
+          //       ),
+          //       Text('Page ${employeeController.currentPage.value} of ${employeeController.totalPages.value}'),
+          //       ElevatedButton(
+          //         onPressed: employeeController.currentPage.value < employeeController.totalPages.value
+          //             ? () => employeeController.goToNextPage()
+          //             : null,
+          //         child: Text('Next'),
+          //       ),
+          //     ],
+          //   )),
+          // ),
         ],
       ),
     );
