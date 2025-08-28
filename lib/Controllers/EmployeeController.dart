@@ -31,22 +31,32 @@ class EmployeeController extends GetxController {
 
   Future<void> loadEmployees() async {
     isLoading.value = true;
+    employees.clear();
 
-    final result = await _apiService.getEmployees(currentPage.value);
+    int page = 1;
+    bool more = true;
 
-    if (result['success']) {
-      employees.value = result['employees']; // replace, not append
-      totalPages.value = result['totalPages'];
-      filterEmployees();
-    } else {
-      Get.snackbar(
-        'Error',
-        result['message'],
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    while (more) {
+      final result = await _apiService.getEmployees(page);
+      if (result['success']) {
+        employees.addAll(result['employees']);
+        totalPages.value = result['totalPages'];
+        page++;
+        more = page <= totalPages.value;
+      } else {
+        more = false;
+        Get.snackbar(
+          'Error',
+          result['message'],
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     }
+
+    // Start with all employees visible
+    filteredEmployees.value = List<Employee>.from(employees);
     isLoading.value = false;
   }
 

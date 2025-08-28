@@ -57,7 +57,7 @@ class Homepage extends StatelessWidget {
                 return Center(child: CircularProgressIndicator());
               }
               return RefreshIndicator(
-                onRefresh: () => employeeController.loadEmployees(),
+                onRefresh: () => employeeController.loadAllEmployees(),
                 child: ListView.builder(
                   itemCount: employeeController.filteredEmployees.length,
                   itemBuilder: (context, index) {
