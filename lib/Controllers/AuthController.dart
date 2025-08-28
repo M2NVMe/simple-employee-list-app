@@ -21,38 +21,44 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     checkLoginStatus();
-    // Pre-fill dengan reqres.in test credentials
   }
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
+  /// 🔹 Check if user already logged in from previous session
   void checkLoginStatus() {
     String? token = storage.read('token');
-    isLoggedIn.value = token != null;
+    String? savedEmail = storage.read('userEmail');
+
+    if (token != null) {
+      isLoggedIn.value = true;
+      userEmail.value = savedEmail ?? '';
+      // Auto-redirect to main page if already logged in
+      Future.delayed(Duration.zero, () {
+        Get.offAllNamed(AppRoutes.utama);
+      });
+    } else {
+      isLoggedIn.value = false;
+    }
   }
 
+  /// 🔹 Login and persist credentials
   Future<void> login() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please fill all fields',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Please fill all fields',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
       return;
     }
 
     if (!GetUtils.isEmail(emailController.text)) {
-      Get.snackbar(
-        'Error',
-        'Please enter a valid email',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Please enter a valid email',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
       return;
     }
 
@@ -68,38 +74,36 @@ class AuthController extends GetxController {
     if (result['success']) {
       isLoggedIn.value = true;
       userEmail.value = emailController.text.trim();
-      // Simpan email user ke storage
+
+      // ✅ persist token + email
       storage.write('userEmail', emailController.text.trim());
+      storage.write('token', result['token']);
+
       Get.offAllNamed(AppRoutes.utama);
-      Get.snackbar(
-        'Success',
-        'Login successful!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Success', 'Login successful!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white);
     } else {
-      Get.snackbar(
-        'Error',
-        result['message'],
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', result['message'],
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
     }
   }
 
+  /// 🔹 Logout and clear storage
   void logout() {
     _apiService.logout();
+    storage.remove('userEmail');
+    storage.remove('token');
+
     isLoggedIn.value = false;
     Get.offAllNamed(AppRoutes.login);
-    Get.snackbar(
-      'Success',
-      'Logged out successfully',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    Get.snackbar('Success', 'Logged out successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white);
   }
 
   @override
