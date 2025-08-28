@@ -1,3 +1,5 @@
+import 'package:amazingpeoplegroup_test/Pages/EmployeeExtended/detailed.dart';
+import 'package:amazingpeoplegroup_test/Pages/EmployeeExtended/form.dart';
 import 'package:amazingpeoplegroup_test/Pages/Homepage.dart';
 import 'package:amazingpeoplegroup_test/Pages/LoginPage.dart';
 import 'package:get/get.dart';
@@ -12,5 +14,7 @@ class AppRoutes {
   static List<GetPage> Pages = [
     GetPage(name: login, page: () => Loginpage()),
     GetPage(name: dashboard, page: () => Homepage()),
+    GetPage(name: employeeForm, page: () => EmployeeFormScreen()),
+    GetPage(name: employeeDetail, page: () => EmployeeDetailScreen()),
   ];
 }
