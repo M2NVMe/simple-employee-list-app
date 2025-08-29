@@ -2,9 +2,11 @@ import 'package:amazingpeoplegroup_test/Apis/Models/employeemodel.dart';
 import 'package:amazingpeoplegroup_test/Apis/apiservice.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 
 class EmployeeController extends GetxController {
   final ApiService _apiService = ApiService();
+  final box = GetStorage();
 
   var employees = <Employee>[].obs;
   var filteredEmployees = <Employee>[].obs;
@@ -54,6 +56,12 @@ class EmployeeController extends GetxController {
         );
       }
     }
+
+    // load locally stored employees
+    final localData = box.read<List>('localEmployees') ?? [];
+    final localEmployees = localData.map((e) => Employee.fromJson(e)).toList();
+    employees.addAll(localEmployees);
+
     // Start with all employees visible
     filteredEmployees.value = List<Employee>.from(employees);
     isLoading.value = false;
@@ -61,13 +69,12 @@ class EmployeeController extends GetxController {
 
   void filterEmployees() {
     if (searchQuery.value.isEmpty) {
-      // 👇 make a copy
       filteredEmployees.value = List<Employee>.from(employees);
     } else {
       filteredEmployees.value = employees.where((employee) {
         return employee.fullName
-                .toLowerCase()
-                .contains(searchQuery.value.toLowerCase()) ||
+            .toLowerCase()
+            .contains(searchQuery.value.toLowerCase()) ||
             employee.email
                 .toLowerCase()
                 .contains(searchQuery.value.toLowerCase());
@@ -77,15 +84,7 @@ class EmployeeController extends GetxController {
 
   void onSearchChanged(String query) {
     searchQuery.value = query;
-
-    if (query.isEmpty) {
-      filteredEmployees.value = List<Employee>.from(employees);
-    } else {
-      filteredEmployees.value = employees.where((employee) {
-        return employee.fullName.toLowerCase().contains(query.toLowerCase()) ||
-            employee.email.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    }
+    filterEmployees();
   }
 
   Future<void> goToNextPage() async {
@@ -140,7 +139,7 @@ class EmployeeController extends GetxController {
     final result = selectedEmployee.value == null
         ? await _apiService.createEmployee(employeeData)
         : await _apiService.updateEmployee(
-            selectedEmployee.value!.id, employeeData);
+        selectedEmployee.value!.id, employeeData);
 
     isFormLoading.value = false;
 
@@ -156,7 +155,9 @@ class EmployeeController extends GetxController {
         }
       }
 
+      _saveToLocal(); // 🔹 persist employees to local storage
       filterEmployees();
+
       Get.back();
       Get.snackbar(
         'Success',
@@ -167,8 +168,7 @@ class EmployeeController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-    }
-    else {
+    } else {
       Get.snackbar(
         'Error',
         result['message'],
@@ -184,6 +184,7 @@ class EmployeeController extends GetxController {
 
     if (result['success']) {
       employees.removeWhere((e) => e.id == employee.id);
+      _saveToLocal(); // 🔹 persist after deletion
       filterEmployees();
 
       Get.snackbar(
@@ -204,6 +205,12 @@ class EmployeeController extends GetxController {
     }
   }
 
+  //persist employees
+  void _saveToLocal() {
+    final localEmployees =
+    employees.where((e) => e.id > 1000).map((e) => e.toJson()).toList();
+    box.write('localEmployees', localEmployees);
+  }
 
   bool _validateForm() {
     if (firstNameController.text.isEmpty) {
