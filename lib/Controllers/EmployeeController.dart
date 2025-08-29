@@ -35,37 +35,48 @@ class EmployeeController extends GetxController {
     isLoading.value = true;
     employees.clear();
 
-    int page = 1;
-    bool more = true;
+    try {
+      int page = 1;
+      bool more = true;
 
-    while (more) {
-      final result = await _apiService.getEmployees(page);
-      if (result['success']) {
-        employees.addAll(result['employees']);
-        totalPages.value = result['totalPages'];
-        page++;
-        more = page <= totalPages.value;
-      } else {
-        more = false;
-        Get.snackbar(
-          'Error',
-          result['message'],
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+      while (more) {
+        final result = await _apiService.getEmployees(page);
+        if (result['success']) {
+          employees.addAll(result['employees']);
+          totalPages.value = result['totalPages'];
+          page++;
+          more = page <= totalPages.value;
+        } else {
+          more = false;
+          Get.snackbar(
+            'Error',
+            result['message'],
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      }
+    } catch (e) {
+      // if API fails, still proceed to load local
+      print("API fetch failed: $e");
+    }
+
+    // ✅ always load local employees
+    final box = GetStorage();
+    final localData = box.read<List>('localEmployees') ?? [];
+    final localEmployees = localData.map((e) => Employee.fromJson(e)).toList();
+
+    for (var localEmp in localEmployees) {
+      if (!employees.any((e) => e.id == localEmp.id)) {
+        employees.add(localEmp);
       }
     }
 
-    // load locally stored employees
-    final localData = box.read<List>('localEmployees') ?? [];
-    final localEmployees = localData.map((e) => Employee.fromJson(e)).toList();
-    employees.addAll(localEmployees);
-
-    // Start with all employees visible
     filteredEmployees.value = List<Employee>.from(employees);
     isLoading.value = false;
   }
+
 
   void filterEmployees() {
     if (searchQuery.value.isEmpty) {
@@ -154,9 +165,9 @@ class EmployeeController extends GetxController {
           employees[index] = employee;
         }
       }
-
-      _saveToLocal(); // 🔹 persist employees to local storage
       filterEmployees();
+      final savedEmployees = employees.map((e) => e.toJson()).toList();
+      GetStorage().write('localEmployees', savedEmployees);
 
       Get.back();
       Get.snackbar(
@@ -178,6 +189,8 @@ class EmployeeController extends GetxController {
       );
     }
   }
+
+
 
   Future<void> deleteEmployee(Employee employee) async {
     final result = await _apiService.deleteEmployee(employee.id);
